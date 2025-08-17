@@ -1,86 +1,66 @@
-
+from embeddings import get_openai_embeddings
 import streamlit as st
-import tensorflow as tf
+import pandas as pd
 import numpy as np
-from tensorflow import keras
-from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
-from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
-from PIL import Image
 import pickle
-from keras.layers import GlobalAveragePooling2D
-from keras.models import Model
 
-
-# constants
-IMG_SIZE = (224, 224)
-IMG_ADDRESS = "https://insideclimatenews.org/wp-content/uploads/2023/03/wildfire_thibaud-mortiz-afp-getty-2048x1365.jpg"
-IMAGE_NAME = "user_image.png"
-CLASS_LABEL = ['Concussion', 'No Concussion']
-CLASS_LABEL.sort()
-
+MODEL_NAME = "balanced_MLP_best_model"
 
 @st.cache_resource
-def get_MobileNetV2_model():
+def load_model(model_name):
+    with open(model_name, "rb") as file_name:
+        return pickle.load(file_name)
 
-    # Download the model, valid alpha values [0.25,0.35,0.5,0.75,1]
-    base_model = keras.applications.MobileNetV2(include_top = False, weights = "imagenet", input_shape = (224, 224, 3), classes = 1000, classifier_activation = "softmax")
-    # Add average pooling to the base
-    x = base_model.output
-    x = GlobalAveragePooling2D()(x)
-    model_frozen = Model(inputs=base_model.input,outputs=x)
+# Load the model
+tabular_model = load_model(MODEL_NAME)
 
-    return model_frozen
+# Title
+st.title("Soccer Concussion Classification")
+st.subheader("User Dashboard")
+
+# Initialize session state for the inputs
+for key in ["age", "gender", "issue", "body_part_affected"]:
+    if key not in st.session_state:
+        st.session_state[key] = ""
+
+# Input fields
+st.session_state.age = st.text_input("Enter Age", st.session_state.age)
+st.session_state.gender = st.text_input("Enter The Gender", st.session_state.gender)
+# st.session_state.gender = st.selectbox("Enter The Gender", ("Male", "Female"), index=0 if st.session_state.gender == "" else ("Male", "Female").index(st.session_state.gender))
+st.session_state.issue = st.text_input("Issue / Accident Happened", st.session_state.issue)
+st.session_state.body_part_affected = st.text_input("Body Part Affected", st.session_state.body_part_affected)
+
+# Apply button
+if st.button("Apply"):
+    if not st.session_state.age or not st.session_state.gender or not st.session_state.issue or not st.session_state.body_part_affected:
+        st.error("Please enter all required information")
+    else:
+        st.success("All information provided!")
+        text  = f"{st.session_state.age} Year Old {st.session_state.gender} PLAYING SOCCER, {st.session_state.issue}. Body part affected {st.session_state.body_part_affected}"
+        # User Data
+        st.subheader("User Data")
+        st.divider()
+        st.write(text)
+        st.divider()
+    
+        # Generate embeddings
+        embeddings = get_openai_embeddings(text)
+
+        # Ensure the embeddings are in 2D shape for the model
+        embedding_array = np.array(embeddings).reshape(1, -1)
+
+        # Make prediction
+        index = tabular_model.predict(embedding_array)
+        labels = ['Concussion', 'No Concussion']
+        injury_status = labels[index[0]]
+
+        # Display prediction in Streamlit
+        st.subheader("Predictions")
+        st.write(f"**{injury_status}**")
 
 
-@st.cache_resource
-def load_sklearn_models(model_path):
-
-    with open(model_path, 'rb') as model_file:
-        final_model = pickle.load(model_file)
-
-    return final_model
-
-
-def featurization(image_path, model):
-
-    img = tf.keras.preprocessing.image.load_img(image_path, target_size=IMG_SIZE)
-    img_array = tf.keras.preprocessing.image.img_to_array(img)
-    img_batch = np.expand_dims(img_array, axis=0)
-    img_preprocessed = preprocess_input(img_batch)
-    predictions = model.predict(img_preprocessed)
-
-    return predictions
-
-
-# get the featurization model
-MobileNetV2_featurized_model = get_MobileNetV2_model()
-# load ultrasound image
-classification_model = load_sklearn_models("best_ml_model")
-
-
-# web app
-def run_app():
-    # title
-    st.title("Wild Fire Classification")
-    # image
-    st.image(IMG_ADDRESS, caption = "Wild Fire Classification - Sattelite Images")
-
-    # input image
-    st.subheader("Please Upload a Sattelite Image")
-
-    # file uploader
-    image = st.file_uploader("Please Upload a Sattelite Image", type = ["jpg", "png", "jpeg"], accept_multiple_files = False, help = "Upload an Image")
-
-    if image:
-            user_image = Image.open(image)
-            # save the image to set the path
-            user_image.save(IMAGE_NAME)
-            # set the user image
-            st.image(user_image, caption = "User Uploaded Image")
-
-            #get the features
-            with st.spinner("Processing......."):
-                image_features = featurization(IMAGE_NAME, MobileNetV2_featurized_model)
-                model_predict = classification_model.predict(image_features)
-                result_label = CLASS_LABEL[model_predict[0]]
-                st.success(f"Prediction: {result_label}")
+# Clear All button (outside Apply block)
+if st.button("Clear All"):
+    for key in ["age", "gender", "issue", "body_part_affected"]:
+        st.session_state[key] = ""
+    st.rerun()
