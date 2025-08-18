@@ -4,6 +4,10 @@ import pandas as pd
 import numpy as np
 import pickle
 
+if not st.experimental_user.is_logged_in:
+    st.error("Please log in to access the App")
+    st.stop()
+
 MODEL_NAME = "balanced_MLP_best_model"
 
 @st.cache_resource
