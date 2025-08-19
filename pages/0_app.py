@@ -23,7 +23,7 @@ st.title("Soccer Concussion Classification")
 st.subheader("User Dashboard")
 
 #Initialize session state for input fields
-for key, default in {"age": 18,"gender": "Male","issue": "","body_part_affected": ""}.items():
+for key, default in {"age": 18,"gender": "","issue": "","body_part_affected": ""}.items():
     if key not in st.session_state:
         st.session_state[key] = default
 
