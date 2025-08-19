@@ -22,16 +22,14 @@ tabular_model = load_model(MODEL_NAME)
 st.title("Soccer Concussion Classification")
 st.subheader("User Dashboard")
 
-# Initialize session state for the inputs
-for key in ["age", "gender", "issue", "body_part_affected"]:
-    if key not in st.session_state:
-        st.session_state[key] = ""
+#Initialize session state for input fields
+for key in ['age', 'gender', 'issue', 'body_part_affected']:
+    st.session_state[key] = ''
 
 # Input fields
-st.session_state.age = st.text_input("Enter Age", st.session_state.age)
-st.session_state.gender = st.text_input("Enter The Gender", st.session_state.gender)
-# st.session_state.gender = st.selectbox("Enter The Gender", ("Male", "Female"), index=0 if st.session_state.gender == "" else ("Male", "Female").index(st.session_state.gender))
-st.session_state.issue = st.text_input("Issue / Accident Happened", st.session_state.issue)
+st.session_state.age = st.number_input("Enter Age", min_value=3,  max_value=70, st.session_state.age)
+st.session_state.gender = st.selectbox("Enter The Gender", ("Male", "Female"), index=None))
+st.session_state.issue = st.text_input("Issue / Accident Happened", placeholder="Describe the accident breifly")
 st.session_state.body_part_affected = st.text_input("Body Part Affected", st.session_state.body_part_affected)
 
 # Apply button
