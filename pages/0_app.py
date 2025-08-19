@@ -23,14 +23,29 @@ st.title("Soccer Concussion Classification")
 st.subheader("User Dashboard")
 
 #Initialize session state for input fields
-for key in ['age', 'gender', 'issue', 'body_part_affected']:
-    st.session_state[key] = ''
+for key, default in {"age": 18,"gender": "Male","issue": "","body_part_affected": ""}.items():
+    if key not in st.session_state:
+        st.session_state[key] = default
 
 # Input fields
-st.session_state.age = st.number_input("Enter Age", min_value=3,  max_value=70, st.session_state.age)
-st.session_state.gender = st.selectbox("Enter The Gender", ("Male", "Female"), index=None))
-st.session_state.issue = st.text_input("Issue / Accident Happened", placeholder="Describe the accident breifly")
-st.session_state.body_part_affected = st.text_input("Body Part Affected", st.session_state.body_part_affected)
+st.session_state.age = st.number_input(
+    "Enter Age", min_value=3, max_value=70, value=st.session_state.age
+)
+
+st.session_state.gender = st.selectbox(
+    "Enter The Gender", ("Male", "Female"), 
+    index=0 if st.session_state.gender == "Male" else 1
+)
+
+st.session_state.issue = st.text_input(
+    "Issue / Accident Happened", 
+    value=st.session_state.issue, 
+    placeholder="Describe the accident briefly"
+)
+
+st.session_state.body_part_affected = st.text_input(
+    "Body Part Affected", value=st.session_state.body_part_affected
+)
 
 # Apply button
 if st.button("Apply"):
