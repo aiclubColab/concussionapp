@@ -78,7 +78,13 @@ if st.button("Apply"):
 
 # Clear All button (outside Apply block)
 if st.button("Clear All"):
-    for key, default in {"age": 18,"gender": "","issue": "","body_part_affected": ""}.items():
-        if key not in st.session_state:
-            st.session_state[key] = default
+    reset_defaults = {
+        "age": 18,
+        "gender": "",
+        "issue": "",
+        "body_part_affected": ""
+    }
+    for key, default in reset_defaults.items():
+        st.session_state[key] = default
     st.rerun()
+
